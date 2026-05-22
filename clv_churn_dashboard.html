@@ -1,0 +1,251 @@
+
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">CLV and churn prediction Power BI-style dashboard with KPI cards, scatter plot, cohort heatmap, and segment breakdown</h2>
+
+<style>
+  .db-wrap { font-family: var(--font-sans); padding: 0; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding: 14px 20px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .topbar-title { font-size:15px; font-weight:500; color:var(--color-text-primary); }
+  .topbar-sub { font-size:12px; color:var(--color-text-tertiary); }
+  .filter-row { display:flex; gap:8px; padding:10px 20px; border-bottom:0.5px solid var(--color-border-tertiary); align-items:center; }
+  .filter-label { font-size:11px; color:var(--color-text-tertiary); text-transform:uppercase; letter-spacing:0.05em; }
+  .filter-pill { font-size:12px; padding:4px 12px; border-radius:99px; border:0.5px solid var(--color-border-secondary); color:var(--color-text-secondary); cursor:pointer; background:none; }
+  .filter-pill.active { background:var(--color-background-info); color:var(--color-text-info); border-color:var(--color-border-info); }
+  .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:14px 20px; }
+  .kpi { background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:12px 14px; }
+  .kpi-label { font-size:11px; color:var(--color-text-tertiary); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+  .kpi-val { font-size:22px; font-weight:500; color:var(--color-text-primary); }
+  .kpi-delta { font-size:11px; margin-top:3px; }
+  .kpi-delta.up { color: #3B6D11; }
+  .kpi-delta.dn { color: #A32D2D; }
+  .charts-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 20px 10px; }
+  .chart-card { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-lg); padding:14px; }
+  .chart-title { font-size:12px; font-weight:500; color:var(--color-text-primary); margin-bottom:12px; }
+  .charts-row2 { display:grid; grid-template-columns:1.4fr 1fr; gap:10px; padding:0 20px 20px; }
+  .seg-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .seg-table th { font-size:11px; font-weight:500; color:var(--color-text-tertiary); text-align:left; padding:4px 0; border-bottom:0.5px solid var(--color-border-tertiary); text-transform:uppercase; letter-spacing:0.04em; }
+  .seg-table td { padding:7px 0; border-bottom:0.5px solid var(--color-border-tertiary); color:var(--color-text-primary); }
+  .seg-table tr:last-child td { border-bottom:none; }
+  .seg-badge { font-size:11px; padding:2px 8px; border-radius:99px; font-weight:500; display:inline-block; }
+  .b-champ { background:#EAF3DE; color:#27500A; }
+  .b-risk  { background:#FCEBEB; color:#791F1F; }
+  .b-prom  { background:#FAEEDA; color:#633806; }
+  .b-lost  { background:#F1EFE8; color:#5F5E5A; }
+  .bar-bg { background:var(--color-border-tertiary); border-radius:99px; height:5px; width:100%; }
+  .bar-fill { height:5px; border-radius:99px; }
+  .legend-row { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:10px; }
+  .legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--color-text-secondary); }
+  .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+</style>
+
+<div class="db-wrap">
+
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Customer Lifetime Value & Churn Prediction</div>
+      <div class="topbar-sub">UCI Online Retail Dataset · 4,372 customers · 12 months · last updated May 2026</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <select style="font-size:12px;padding:4px 8px;border-radius:var(--border-radius-md);">
+        <option>All countries</option><option>United Kingdom</option><option>Germany</option><option>France</option>
+      </select>
+      <select style="font-size:12px;padding:4px 8px;border-radius:var(--border-radius-md);">
+        <option>All segments</option><option>Champions</option><option>At-Risk</option><option>Promising</option><option>Lost</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">Total customers</div>
+      <div class="kpi-val">4,372</div>
+      <div class="kpi-delta up">↑ 8.4% vs prior period</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Avg CLV</div>
+      <div class="kpi-val">$1,842</div>
+      <div class="kpi-delta up">↑ 12.1% vs prior period</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Churn rate</div>
+      <div class="kpi-val">24.8%</div>
+      <div class="kpi-delta dn">↑ 2.3pp — at-risk rising</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Revenue at risk</div>
+      <div class="kpi-val">$487k</div>
+      <div class="kpi-delta dn">High-value at-risk cohort</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+
+    <div class="chart-card">
+      <div class="chart-title">Churn probability vs. CLV — customer scatter</div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-dot" style="background:#639922;"></span>Champions</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#E24B4A;"></span>At-Risk</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#BA7517;"></span>Promising</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#888780;"></span>Lost</span>
+      </div>
+      <div style="position:relative;height:210px;"><canvas id="scatter" role="img" aria-label="Scatter plot showing churn probability vs customer lifetime value. Champions cluster in low churn high CLV quadrant. At-risk customers have high churn probability and moderate to high CLV.">Scatter: Champions (low churn, high CLV), At-Risk (high churn, moderate-high CLV), Promising (low churn, low CLV), Lost (high churn, low CLV).</canvas></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-text-tertiary);margin-top:6px;"><span>← low churn risk</span><span>high churn risk →</span></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Monthly revenue by segment</div>
+      <div class="legend-row">
+        <span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#639922;"></span>Champions</span>
+        <span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#E24B4A;"></span>At-Risk</span>
+        <span class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#BA7517;"></span>Promising</span>
+      </div>
+      <div style="position:relative;height:210px;"><canvas id="stackbar" role="img" aria-label="Stacked bar chart showing monthly revenue by customer segment from January to June. Champions contribute the largest share each month.">Monthly revenue stacked by Champions, At-Risk, and Promising segments Jan–Jun.</canvas></div>
+    </div>
+
+  </div>
+
+  <div class="charts-row2">
+
+    <div class="chart-card">
+      <div class="chart-title">Cohort retention heatmap — % retained by acquisition month</div>
+      <div id="heatmap" style="overflow-x:auto;"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Customer segment breakdown</div>
+      <table class="seg-table">
+        <thead><tr>
+          <th>Segment</th><th>Customers</th><th>Avg CLV</th><th>Share</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="seg-badge b-champ">Champions</span></td>
+            <td>874</td><td>$3,210</td>
+            <td><div class="bar-bg"><div class="bar-fill" style="width:60%;background:#639922;"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="seg-badge b-risk">At-Risk</span></td>
+            <td>1,048</td><td>$1,540</td>
+            <td><div class="bar-bg"><div class="bar-fill" style="width:72%;background:#E24B4A;"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="seg-badge b-prom">Promising</span></td>
+            <td>1,312</td><td>$980</td>
+            <td><div class="bar-bg"><div class="bar-fill" style="width:85%;background:#BA7517;"></div></div></td>
+          </tr>
+          <tr>
+            <td><span class="seg-badge b-lost">Lost</span></td>
+            <td>1,138</td><td>$210</td>
+            <td><div class="bar-bg"><div class="bar-fill" style="width:45%;background:#888780;"></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:16px;">
+        <div class="chart-title" style="margin-bottom:8px;">Model performance</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="kpi"><div class="kpi-label">ROC-AUC</div><div style="font-size:18px;font-weight:500;color:var(--color-text-primary);">0.91</div></div>
+          <div class="kpi"><div class="kpi-label">Recall</div><div style="font-size:18px;font-weight:500;color:var(--color-text-primary);">79%</div></div>
+          <div class="kpi"><div class="kpi-label">Precision</div><div style="font-size:18px;font-weight:500;color:var(--color-text-primary);">83%</div></div>
+          <div class="kpi"><div class="kpi-label">Accuracy</div><div style="font-size:18px;font-weight:500;color:var(--color-text-primary);">87%</div></div>
+        </div>
+      </div>
+      <button style="width:100%;margin-top:12px;font-size:13px;" onclick="sendPrompt('Build the starter Python notebook for Project 1 CLV churn model')">Build Python notebook for this model ↗</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+const tickColor = isDark ? '#888' : '#999';
+
+const scatterData = {
+  datasets: [
+    { label:'Champions', data:[{x:0.06,y:3800},{x:0.09,y:3200},{x:0.04,y:4100},{x:0.11,y:2900},{x:0.07,y:3600},{x:0.05,y:4300},{x:0.13,y:2700},{x:0.08,y:3100}], backgroundColor:'#639922', pointStyle:'circle', radius:5 },
+    { label:'At-Risk',   data:[{x:0.71,y:2100},{x:0.82,y:1600},{x:0.65,y:2400},{x:0.78,y:1900},{x:0.88,y:1400},{x:0.69,y:2200},{x:0.91,y:1200},{x:0.74,y:1800}], backgroundColor:'#E24B4A', pointStyle:'triangle', radius:5 },
+    { label:'Promising', data:[{x:0.18,y:900},{x:0.22,y:750},{x:0.15,y:1100},{x:0.25,y:680},{x:0.19,y:820},{x:0.28,y:600},{x:0.12,y:1050}], backgroundColor:'#BA7517', pointStyle:'rect', radius:5 },
+    { label:'Lost',      data:[{x:0.62,y:250},{x:0.75,y:190},{x:0.85,y:160},{x:0.58,y:280},{x:0.93,y:120},{x:0.70,y:210}], backgroundColor:'#888780', pointStyle:'rectRot', radius:5 }
+  ]
+};
+
+new Chart(document.getElementById('scatter'), {
+  type:'scatter',
+  data: scatterData,
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => `CLV: $${ctx.parsed.y.toFixed(0)} | Churn: ${(ctx.parsed.x*100).toFixed(0)}%` }}},
+    scales:{
+      x:{ min:0, max:1.05, title:{ display:true, text:'Churn probability', font:{size:11}, color:tickColor }, ticks:{ color:tickColor, callback: v => (v*100).toFixed(0)+'%' }, grid:{color:gridColor} },
+      y:{ min:0, max:4800, title:{ display:true, text:'CLV ($)', font:{size:11}, color:tickColor }, ticks:{ color:tickColor, callback: v => '$'+(v/1000).toFixed(0)+'k' }, grid:{color:gridColor} }
+    }
+  }
+});
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+new Chart(document.getElementById('stackbar'), {
+  type:'bar',
+  data:{
+    labels: months,
+    datasets:[
+      { label:'Champions', data:[48200,51400,49800,55600,58200,61000], backgroundColor:'#639922' },
+      { label:'At-Risk',   data:[22400,21800,23600,20100,19800,18400], backgroundColor:'#E24B4A' },
+      { label:'Promising', data:[14800,15200,16100,17400,18200,19600], backgroundColor:'#BA7517' }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false } },
+    scales:{
+      x:{ stacked:true, ticks:{color:tickColor}, grid:{display:false} },
+      y:{ stacked:true, ticks:{ color:tickColor, callback: v => '$'+(v/1000).toFixed(0)+'k' }, grid:{color:gridColor} }
+    }
+  }
+});
+
+const cohorts = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+const periods = ['M0','M1','M2','M3','M4','M5','M6'];
+const retention = [
+  [100,72,54,41,35,30,28],
+  [100,69,51,38,32,27,null],
+  [100,74,58,44,37,32,null],
+  [100,66,48,36,null,null,null],
+  [100,71,53,40,null,null,null],
+  [100,68,50,null,null,null,null],
+  [100,73,null,null,null,null,null],
+  [100,null,null,null,null,null,null],
+];
+function retColor(v) {
+  if(v===null) return isDark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
+  if(v>=80) return isDark?'#085041':'#C0DD97';
+  if(v>=60) return isDark?'#0F6E56':'#5DCAA5';
+  if(v>=40) return isDark?'#BA7517':'#FAEEDA';
+  if(v>=20) return isDark?'#993C1D':'#F5C4B3';
+  return isDark?'#791F1F':'#F7C1C1';
+}
+function retTextColor(v) {
+  if(v===null) return 'transparent';
+  return isDark?'rgba(255,255,255,0.7)':'rgba(0,0,0,0.65)';
+}
+
+const hmDiv = document.getElementById('heatmap');
+let hmHtml = `<table style="width:100%;border-collapse:collapse;font-size:11px;">`;
+hmHtml += `<tr><th style="text-align:left;color:${tickColor};font-weight:500;padding:3px 4px;">Cohort</th>`;
+periods.forEach(p => { hmHtml += `<th style="text-align:center;color:${tickColor};font-weight:500;padding:3px 4px;">${p}</th>`; });
+hmHtml += `</tr>`;
+cohorts.forEach((c,i) => {
+  hmHtml += `<tr><td style="font-weight:500;color:var(--color-text-secondary);padding:4px 4px;white-space:nowrap;">${c}</td>`;
+  periods.forEach((_,j) => {
+    const v = retention[i][j];
+    hmHtml += `<td style="text-align:center;background:${retColor(v)};color:${retTextColor(v)};padding:5px 2px;border-radius:3px;font-weight:${v===100?'500':'400'};">${v!==null?v+'%':''}</td>`;
+  });
+  hmHtml += `</tr>`;
+});
+hmHtml += `</table>`;
+hmHtml += `<div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">`;
+const legend = [{c:isDark?'#085041':'#C0DD97',l:'≥80%'},{c:isDark?'#0F6E56':'#5DCAA5',l:'60–79%'},{c:isDark?'#BA7517':'#FAEEDA',l:'40–59%'},{c:isDark?'#993C1D':'#F5C4B3',l:'20–39%'},{c:isDark?'#791F1F':'#F7C1C1',l:'<20%'}];
+legend.forEach(l => { hmHtml += `<span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-tertiary);"><span style="width:12px;height:12px;border-radius:2px;background:${l.c};display:inline-block;"></span>${l.l}</span>`; });
+hmHtml += `</div>`;
+hmDiv.innerHTML = hmHtml;
+</script>
